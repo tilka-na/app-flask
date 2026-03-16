@@ -1,30 +1,35 @@
-name: Docker CI
+name: Docker CI Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ main ]
+      branches: [ "main" ]
 
 jobs:
-  build-and-push:
-    runs-on: ubuntu-latest
+ build-and-push:
+  runs-on: ubuntu-latest
+  steps:
+  - name: Checkout repository
+    uses: actions/checkout@v3
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  - name: Set up Docker Buildx
+    uses: docker/setup-buildx-action@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+  - name: Login to DockerHub
+    uses: docker/login-action@v3
+    with:
+      username: ${{ secrets.DOCKER_USERNAME }}
+      password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+  - name: Build Backend Image
+    run: docker build -t soumiakh/flask-api:latest ./backend
 
-      - name: Build Docker image
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/my-app:v1 .
+  - name: Build Frontend Image
+    run: docker build -t soumiakh/frontend-app:latest ./frontend
 
-      - name: Push Docker image
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/my-app:v1
+  - name: Push Backend Image
+    run: docker push soumiakh/flask-api:latest
+
+  - name: Push Frontend Image
+    run: docker push soumiakh/frontend-app:latest
